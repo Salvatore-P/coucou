@@ -1,7 +1,7 @@
 // Plays a pretend Claude Code session through the real relay, so the island,
 // the relay and the socket/pipe can be tried end to end without Claude Code.
 //
-//   npm run fake-session               a whole session, ending on a permission request
+//   npm run fake-session               a whole session, from start to SessionEnd
 //   npm run fake-session -- permission just the permission request
 //
 // Every event is piped into coucou-hook exactly as Claude Code would do it.
@@ -58,7 +58,13 @@ const SESSION = [
   { hook_event_name: "PostToolUse", tool_name: "Grep" },
   PERMISSION,
   { hook_event_name: "Stop", message: "Build folder tidied" },
+  // Without it the pretend session stays on the island, its last step still
+  // shimmering, until Coucou restarts: only SessionEnd clears a session.
+  { hook_event_name: "SessionEnd", reason: "other" },
 ];
+
+// The finished card stays up for about 5 s after Stop; end the session after it.
+const PAUSE_AFTER = { Stop: 6000 };
 
 /** One hook run: JSON on stdin, whatever the relay prints on stdout. */
 function send(event) {
@@ -87,5 +93,5 @@ for (const event of events) {
   } else {
     console.log(`${name}${code === 0 ? "" : ` (exit ${code})`}`);
   }
-  await sleep(900);
+  await sleep(PAUSE_AFTER[name] ?? 900);
 }
