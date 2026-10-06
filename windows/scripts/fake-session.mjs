@@ -2,7 +2,7 @@
 // the relay and the socket/pipe can be tried end to end without Claude Code.
 //
 //   npm run fake-session               a whole session, from start to SessionEnd
-//   npm run fake-session -- permission just the permission request
+//   npm run fake-session -- permission just the permission request, then the end
 //
 // Every event is piped into coucou-hook exactly as Claude Code would do it.
 // Nothing is ever executed: the "command" in the permission request is only
@@ -79,7 +79,10 @@ function send(event) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const events = process.argv[2] === "permission" ? [PERMISSION] : SESSION;
+// "permission" still ends the session after the answer: without Stop and
+// SessionEnd the island keeps showing Claude as working for ever.
+const ENDING = SESSION.slice(-2);
+const events = process.argv[2] === "permission" ? [PERMISSION, ...ENDING] : SESSION;
 console.log(`relay: ${hook}\nsession: ${session}\n`);
 
 for (const event of events) {
